@@ -6,16 +6,20 @@ class Player(Tile):
         super().__init__(player_groups, player_image, pos_x, pos_y, size_x, size_y)
 
     def may_be_down(self, game):
-        return self.rect.top + self.size_y < game.height_canvas
+        return self.rect.top + self.size_y < game.height_canvas and \
+               game.level_map[self.pos_y + 1][self.pos_x] != 'S'
 
     def may_be_up(self, game):
-        return self.rect.top - self.size_y >= 0
+        return self.rect.top - self.size_y >= 0 and \
+               game.level_map[self.pos_y - 1][self.pos_x] != 'S'
 
     def may_be_right(self, game):
-        return self.rect.left + self.size_x < game.width_canvas
+        return self.rect.left + self.size_x < game.width_canvas and \
+               game.level_map[self.pos_y][self.pos_x + 1] != 'S'
 
     def may_be_left(self, game):
-        return self.rect.left - self.size_x >= 0
+        return self.rect.left - self.size_x >= 0 and \
+               game.level_map[self.pos_y][self.pos_x - 1] != 'S'
 
     def put_nothing(self, game):
         game.level_map[self.pos_y][self.pos_x] = '.'
@@ -54,6 +58,7 @@ class Player(Tile):
                 game.level_map[self.pos_y][self.pos_x] = 'P'
                 game.tiles[self.pos_y][self.pos_x].kill()
                 game.score += 100
+                print('Score = ', game.score)
             elif game.level_map[self.pos_y][self.pos_x] == '.':
                 game.level_map[self.pos_y][self.pos_x] = 'P'
 
