@@ -2,14 +2,14 @@ from random import seed, randrange, choice, randint
 
 LEVEL_PARAMS = {'level_1': {'size_x': 9, 'size_y': 7, 'monsters': 0, 'sacks': 0, 'gold': 10},
                 'level_2': {'size_x': 10, 'size_y': 7, 'monsters': 0, 'sacks': 5, 'gold': 5},
-                'level_3': {'size_x': 15, 'size_y': 15, 'monsters': 5, 'sacks': 10, 'gold': 10},
-                'level_4': {'size_x': 20, 'size_y': 15, 'monsters': 5, 'sacks': 20, 'gold': 10},
-                'level_5': {'size_x': 23, 'size_y': 20, 'monsters': 10, 'sacks': 15, 'gold': 15},
-                'level_6': {'size_x': 29, 'size_y': 20, 'monsters': 10, 'sacks': 20, 'gold': 20},
-                'level_7': {'size_x': 37, 'size_y': 25, 'monsters': 15, 'sacks': 20, 'gold': 0},
-                'level_8': {'size_x': 43, 'size_y': 25, 'monsters': 15, 'sacks': 25, 'gold': 20},
-                'level_9': {'size_x': 47, 'size_y': 25, 'monsters': 20, 'sacks': 30, 'gold': 30},
-                'level_10': {'size_x': 60, 'size_y': 25, 'monsters': 25, 'sacks': 50, 'gold': 50}}
+                'level_3': {'size_x': 15, 'size_y': 15, 'monsters': 3, 'sacks': 10, 'gold': 10},
+                'level_4': {'size_x': 20, 'size_y': 15, 'monsters': 3, 'sacks': 20, 'gold': 10},
+                'level_5': {'size_x': 23, 'size_y': 20, 'monsters': 5, 'sacks': 15, 'gold': 15},
+                'level_6': {'size_x': 29, 'size_y': 20, 'monsters': 5, 'sacks': 20, 'gold': 20},
+                'level_7': {'size_x': 37, 'size_y': 25, 'monsters': 10, 'sacks': 20, 'gold': 20},
+                'level_8': {'size_x': 43, 'size_y': 25, 'monsters': 10, 'sacks': 25, 'gold': 30},
+                'level_9': {'size_x': 47, 'size_y': 25, 'monsters': 15, 'sacks': 30, 'gold': 30},
+                'level_10': {'size_x': 60, 'size_y': 25, 'monsters': 15, 'sacks': 50, 'gold': 50}}
 
 
 class GeneratorMap():
@@ -29,7 +29,10 @@ class GeneratorMap():
         map = []
         for i in range(size_y):
             map.append(list(' ' * size_x))
-        self.random_way(size_x, size_y, map, free // 2)
+        if self.level > 5:
+            self.random_way(size_x, size_y, map, round(free * 5 / 6))
+        else:
+            self.random_way(size_x, size_y, map, free // 2)
         self.fill_other_as_terrain(map)
         self.put_monsters(size_x, size_y, map, monsters)
         self.put_gold(size_x, size_y, map, gold)
@@ -70,18 +73,18 @@ class GeneratorMap():
                 if map[y][x] == ' ':
                     map[y][x] = 'T'
 
-    def take_random_terrain(self, size_x, size_y, map):
+    def take_random_tile(self, size_x, size_y, map, ch):
         x, y = randrange(0, size_x), randrange(0, size_y)
-        while map[y][x] != 'T':
+        while map[y][x] != ch:
             x, y = randrange(0, size_x), randrange(0, size_y)
         return x, y
 
-    def take_random_terrain_near(self, size_x, size_y, map, x, y):
+    def take_random_near(self, size_x, size_y, map, x, y, ch):
         near_x, near_y = None, None
         attempts = 0
         while attempts <= 10:
             dx, dy = choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
-            if self.into_map(x + dx, y + dy, size_x, size_y) and map[y + dy][x + dx] == 'T':
+            if self.into_map(x + dx, y + dy, size_x, size_y) and map[y + dy][x + dx] == ch:
                 near_x, near_y = x + dx, y + dy
                 break
             attempts += 1
@@ -89,12 +92,12 @@ class GeneratorMap():
         return success, near_x, near_y
 
     def put_one_monster(self, size_x, size_y, map):
-        x, y = self.take_random_terrain(size_x, size_y, map)
+        x, y = self.take_random_tile(size_x, size_y, map, '.')
         start_x, start_y = x, y
         map[y][x] = 'M'
         count_space_near = randint(1, 7)
         for i in range(count_space_near):
-            founded, near_x, near_y = self.take_random_terrain_near(size_x, size_y, map, x, y)
+            founded, near_x, near_y = self.take_random_near(size_x, size_y, map, x, y, '.')
             if founded:
                 x, y = near_x, near_y
                 map[y][x] = '.'
@@ -109,54 +112,47 @@ class GeneratorMap():
         count = 0
         for dx in range(-1, 2):
             for dy in range(-1, 2):
-                # print(f'x - {x}, dx - {dx}, x + dx - {x + dx}')
-                # print(f'y - {y}, dy - {dy}, y + dy - {y + dy}')
                 if self.into_map(x + dx, y + dy, size_x, size_y) and not (dx == 0 and dy == 0):
-                    # print(f'into x - {x}, dx - {dx}, x + dx - {x + dx}')
-                    # print(f'into y - {y}, dy - {dy}, y + dy - {y + dy}')
                     count += 1
-        print()
         return count
 
-    def terrain_around(self, x, y, size_x, size_y, map):
+    def tiles_around(self, x, y, size_x, size_y, map, ch):
         count = 0
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 if self.into_map(x + dx, y + dy, size_x, size_y) and \
-                        not (dx == 0 and dy == 0) and map[y + dy][x + dx] == 'T':
+                        not (dx == 0 and dy == 0) and map[y + dy][x + dx] == ch:
                     count += 1
         return count
 
     def put_single(self, size_x, size_y, map, ch):
         if map[0][0] == 'T' and \
                 self.count_around(0, 0, size_x, size_y) == \
-                self.terrain_around(0, 0, size_x, size_y, map):
-            # print(f'1 - {self.count_around(0, 0, size_x, size_y)}')
-            # print(f'2 - {self.terrain_around(0, 0, size_x, size_y, map)}')
+                self.tiles_around(0, 0, size_x, size_y, map, 'T'):
             map[0][0] = ch
             return
         if map[0][size_x - 1] == 'T' and \
                 self.count_around(size_x - 1, 0, size_x, size_y) == \
-                self.terrain_around(size_x - 1, 0, size_x, size_y, map):
+                self.tiles_around(size_x - 1, 0, size_x, size_y, map, 'T'):
             map[0][size_x - 1] = ch
             return
         if map[size_y - 1][0] == 'T' and \
                 self.count_around(0, size_y - 1, size_x, size_y) == \
-                self.terrain_around(0, size_y - 1, size_x, size_y, map):
+                self.tiles_around(0, size_y - 1, size_x, size_y, map, 'T'):
             map[size_y - 1][0] = ch
             return
         if map[size_y - 1][size_x - 1] == 'T' and \
                 self.count_around(size_x - 1, size_y - 1, size_x, size_y) == \
-                self.terrain_around(size_x - 1, size_y - 1, size_x, size_y, map):
+                self.tiles_around(size_x - 1, size_y - 1, size_x, size_y, map, 'T'):
             map[size_y - 1][size_x - 1] = ch
             return
-        x, y = self.take_random_terrain(size_x, size_y, map)
+        x, y = self.take_random_tile(size_x, size_y, map, 'T')
         for attempt in range(77):
             if map[y][x] == 'T' and \
                     self.count_around(x, y, size_x, size_y) == \
-                    self.terrain_around(x, y, size_x, size_y, map):
+                    self.tiles_around(x, y, size_x, size_y, map, 'T'):
                 break
-            x, y = self.take_random_terrain(size_x, size_y, map)
+            x, y = self.take_random_tile(size_x, size_y, map, 'T')
         map[y][x] = ch
 
     def put_gold(self, size_x, size_y, map, count_gold):
@@ -165,7 +161,7 @@ class GeneratorMap():
 
     def put_one_gold(self, size_x, size_y, map):
         for attempt in range(7):
-            x, y = self.take_random_terrain(size_x, size_y, map)
+            x, y = self.take_random_tile(size_x, size_y, map, 'T')
             if y == size_y - 1:
                 map[y][x] = 'G'
                 return
@@ -179,7 +175,7 @@ class GeneratorMap():
 
     def put_one_sack(self, size_x, size_y, map):
         for attempt in range(7):
-            x, y = self.take_random_terrain(size_x, size_y - 1, map)
+            x, y = self.take_random_tile(size_x, size_y - 1, map, 'T')
             if y > 0 and (map[y - 1][x] == 'S' or map[y - 1][x] == 'G'):
                 continue
             if map[y + 1][x] == 'T':

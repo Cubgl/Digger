@@ -17,7 +17,7 @@ TILE_HEIGHT = 32
 
 class GameDigger:
     def __init__(self):
-        self.level = 0
+        self.level = 5
         self.count_levels = 10
         self.dificult = 2
         self.score = 0
@@ -34,6 +34,7 @@ class GameDigger:
         self.all_sprites = pygame.sprite.Group()
         self.tiles_group = pygame.sprite.Group()
         self.sack_group = pygame.sprite.Group()
+        self.gold_group = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
         self.monster_group = pygame.sprite.Group()
         self.finish_group = pygame.sprite.Group()
@@ -49,14 +50,13 @@ class GameDigger:
             print(f'Игра зкончилась! Счет {self.score}.')
             return
         if not self.new_game:
+            self.all_sprites.clear(scr, self.image_background)
             for y in range(self.size_board[1]):
                 for x in range(self.size_board[0]):
                     if self.tiles[y][x] is not None:
                         self.tiles[y][x].kill()
             for sprt in self.all_sprites.sprites():
                 sprt.kill()
-
-            self.all_sprites.clear(scr, self.image_background)
         else:
             self.new_game = False
         self.take_level()
@@ -120,7 +120,7 @@ class GameDigger:
                                             self.tile_images['sack'], x, y, TILE_WIDTH, TILE_HEIGHT,
                                             self)
                 elif level_map[y][x] == 'G':
-                    self.tiles[y][x] = Gold((self.sack_group, self.all_sprites),
+                    self.tiles[y][x] = Gold((self.gold_group, self.all_sprites),
                                             self.tile_images['gold'], x, y, TILE_WIDTH, TILE_HEIGHT,
                                             self)
                 elif level_map[y][x] == 'M':

@@ -23,6 +23,7 @@ class Player(Tile):
 
     def put_nothing(self, game):
         game.level_map[self.pos_y][self.pos_x] = '.'
+        game.tiles[self.pos_y][self.pos_x] = None
 
     def go_down(self, game):
         self.put_nothing(game)
@@ -51,16 +52,12 @@ class Player(Tile):
     def eat(self, game):
         try:
             if game.level_map[self.pos_y][self.pos_x] == 'T':
-                game.level_map[self.pos_y][self.pos_x] = 'P'
                 game.tiles[self.pos_y][self.pos_x].kill()
                 game.score += 1
             elif game.level_map[self.pos_y][self.pos_x] == 'G':
-                game.level_map[self.pos_y][self.pos_x] = 'P'
                 game.tiles[self.pos_y][self.pos_x].kill()
                 game.score += 100
-                print('Score = ', game.score)
-            elif game.level_map[self.pos_y][self.pos_x] == '.':
-                game.level_map[self.pos_y][self.pos_x] = 'P'
-
+            game.level_map[self.pos_y][self.pos_x] = 'P'
+            game.tiles[self.pos_y][self.pos_x] = self
         except IndexError as e:
             print(f'Position Player row={self.pos_y} col={self.pos_x}', e)
