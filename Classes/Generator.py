@@ -1,20 +1,16 @@
 from random import seed, randrange, choice, randint
 
-LEVEL_PARAMS = {'level_1': {'size_x': 9, 'size_y': 7, 'monsters': 0, 'sacks': 0, 'gold': 10},
-                'level_2': {'size_x': 10, 'size_y': 7, 'monsters': 0, 'sacks': 5, 'gold': 5},
-                'level_3': {'size_x': 15, 'size_y': 15, 'monsters': 3, 'sacks': 10, 'gold': 10},
-                'level_4': {'size_x': 20, 'size_y': 15, 'monsters': 3, 'sacks': 20, 'gold': 10},
-                'level_5': {'size_x': 23, 'size_y': 20, 'monsters': 5, 'sacks': 15, 'gold': 15},
-                'level_6': {'size_x': 29, 'size_y': 20, 'monsters': 5, 'sacks': 20, 'gold': 20},
-                'level_7': {'size_x': 37, 'size_y': 25, 'monsters': 10, 'sacks': 20, 'gold': 20},
-                'level_8': {'size_x': 43, 'size_y': 25, 'monsters': 10, 'sacks': 25, 'gold': 30},
-                'level_9': {'size_x': 47, 'size_y': 25, 'monsters': 15, 'sacks': 30, 'gold': 30},
-                'level_10': {'size_x': 60, 'size_y': 25, 'monsters': 15, 'sacks': 50, 'gold': 50}}
+LEVEL_PARAMS = {'level_1': {'size_x': 10, 'size_y': 10, 'monsters': 3, 'sacks': 10, 'gold': 10},
+                'level_2': {'size_x': 15, 'size_y': 15, 'monsters': 3, 'sacks': 20, 'gold': 10},
+                'level_3': {'size_x': 20, 'size_y': 15, 'monsters': 5, 'sacks': 15, 'gold': 15},
+                'level_4': {'size_x': 20, 'size_y': 17, 'monsters': 10, 'sacks': 20, 'gold': 20},
+                'level_5': {'size_x': 23, 'size_y': 18, 'monsters': 20, 'sacks': 20, 'gold': 20}}
 
 
 class GeneratorMap():
     def __init__(self, level):
         self.level = level
+        self.attempt = 5
         seed()
 
     def generate_map(self, level):
@@ -29,17 +25,13 @@ class GeneratorMap():
         map = []
         for i in range(size_y):
             map.append(list(' ' * size_x))
-        if self.level > 5:
-            self.random_way(size_x, size_y, map, round(free * 5 / 6))
-        else:
-            self.random_way(size_x, size_y, map, free // 2)
+        self.random_way(size_x, size_y, map, round(total * 2 / 3))
         self.fill_other_as_terrain(map)
         self.put_monsters(size_x, size_y, map, monsters)
         self.put_gold(size_x, size_y, map, gold)
         self.put_sacks(size_x, size_y, map, sacks)
         self.put_single(size_x, size_y, map, 'P')
         self.put_single(size_x, size_y, map, 'F')
-        self.print_map(map)
         return size, map
 
     def get_size_board(self, level):
@@ -54,11 +46,27 @@ class GeneratorMap():
         map[first_y][first_x] = '.'
         count -= 1
         while count:
-            while True:
-                dx, dy = choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
-                if self.into_map(first_x + dx, first_y + dy, size_x, size_y):
-                    x, y = first_x + dx, first_y + dy
-                    break
+            variants = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1)]
+            best = None
+            max_status = None
+            for dx, dy in variants:
+                x, y = first_x + dx, first_y + dy
+                if not self.into_map(x, y, size_x, size_y) or map[y][x] == '.':
+                    continue
+                count_total = self.count_around(x, y, size_x, size_y)
+                count_terrain = self.tiles_around(x, y, size_x, size_y, map, 'T')
+                status = count_terrain / count_total
+                if best is None or status > max_status:
+                    best = [(x, y)]
+                    max_status = status
+                elif status == max_status:
+                    best.append((x, y))
+            if best is None:
+                self.attempt -= 1
+                if self.attempt:
+                    self.random_way(size_x, size_y, map, count)
+                return
+            x, y = choice(best)
             map[y][x] = '.'
             first_x, first_y = x, y
             count -= 1

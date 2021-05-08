@@ -17,9 +17,8 @@ TILE_HEIGHT = 32
 
 class GameDigger:
     def __init__(self):
-        self.level = 5
-        self.count_levels = 10
-        self.dificult = 2
+        self.level = 0
+        self.count_levels = 5
         self.score = 0
         self.size_board = None
         self.level_map = None
@@ -41,13 +40,15 @@ class GameDigger:
         self.new_game = True
         self.image_background = pygame.Surface([32, 32])
         self.image_background.fill(pygame.Color("black"))
+        self.width_canvas, self.height_canvas = self.resize_canvas(self.board)
         self.goto_next_level(None)
+        self.status = ''
 
     def goto_next_level(self, scr):
         self.level += 1
         if self.level > self.count_levels:
             self.is_over = True
-            print(f'Игра зкончилась! Счет {self.score}.')
+            self.status = 'Вы победили!'
             return
         if not self.new_game:
             self.all_sprites.clear(scr, self.image_background)
@@ -68,11 +69,8 @@ class GameDigger:
         self.player = self.generate_level(self.level_map)
 
     def take_level(self):
-        if self.dificult == 1:
-            self.size_board, self.level_map = self.load_level(f'level{self.level}.map')
-        elif self.dificult == 2:
-            generator = GeneratorMap(self.level)
-            self.size_board, self.level_map = generator.generate_map(self.level)
+        generator = GeneratorMap(self.level)
+        self.size_board, self.level_map = generator.generate_map(self.level)
 
     def load_dict_images(self, the_begin_filename, the_end_filename):
         dict_for_image = dict()

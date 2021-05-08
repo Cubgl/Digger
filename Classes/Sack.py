@@ -41,12 +41,11 @@ class Sack(Tile):
                     game.tiles[new_pos_y][self.pos_x] = self
                 elif game.level_map[new_pos_y][self.pos_x] == 'P':
                     if kill_player:
-                        print('Вас убил мешок с золотом!')
+                        game.status = 'Вас убил мешок с золотом!'
                         game.is_over = True
                     else:
                         self.kill()
                         game.score += 100
-                        print(f'Score = {game.score}')
                 self.pos_y = new_pos_y
 
 

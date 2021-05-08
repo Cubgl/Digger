@@ -9,7 +9,7 @@ class Monster(Tile):
     def __init__(self, player_groups, player_image, pos_x, pos_y, size_x, size_y, game):
         super().__init__(player_groups, player_image, pos_x, pos_y, size_x, size_y)
         self.game = game
-        if self.game.level <= 5:
+        if self.game.level <= 3:
             self.delta = 1
         else:
             self.delta = 2
@@ -21,11 +21,9 @@ class Monster(Tile):
         self.action = self.select_attack(game.level)
 
     def select_attack(self, level):
-        if level <= 3:
-            return self.do_nothing
-        if 3 < level <= 5:
+        if level < 3:
             return self.go_around
-        if level > 5:
+        else:
             return self.go_three_steps
 
     def do_nothing(self):
@@ -163,7 +161,7 @@ class Monster(Tile):
 
     def go_around(self):
         if self.direction == 'no_direction':
-            return
+            self.select_direction()
         map = self.game.level_map
         size_map_x, size_map_y = len(map[0]), len(map)
         while self.to_x == self.pos_x and self.to_y == self.pos_y:
@@ -189,7 +187,7 @@ class Monster(Tile):
         i = 0
         while i < len(queue):
             cur_x, cur_y, cur_steps, _ = queue[i]
-            if cur_steps == 5:
+            if cur_steps == 10:
                 break
             if self.may_go_left(cur_x, cur_y, size_map_x, size_map_y, map) and \
                     (cur_x - 1, cur_y) not in used:
@@ -228,7 +226,6 @@ class Monster(Tile):
                 if cur_x == goal_x and cur_y + 1 == goal_y:
                     break
             i += 1
-        # print(len(queue))
         return queue, min_d
 
     def get_way(self, queue, min_d):
@@ -259,35 +256,18 @@ class Monster(Tile):
         return list(reversed(rez))
 
     def go_three_steps(self):
-        if self.game.level_map[self.pos_y][self.pos_x] == 'T':
-            print(f'WALL !!! pos x {self.pos_x}, y {self.pos_y} ')
-            print(self.way)
-            print()
-            for elem in self.game.level_map:
-                print(''.join(elem))
-            sys.exit()
-
-
-        # print(f'pos x {self.pos_x}, y {self.pos_y}')
-        # print(f'to x {self.to_x} y {self.to_y}')
-
         if self.way is None or len(self.way) == 0:
             goal_x, goal_y = self.game.player.pos_x, self.game.player.pos_y
-            # print(f'Goal x = {goal_x}, y = {goal_y}')
 
             queue, min_dist = self.bfs(self.pos_x, self.pos_y, goal_x, goal_y, self.game.level_map)
-            # print(f'queue = {queue}, min_dist = {min_dist}')
             self.way = self.get_way(queue, min_dist)
-            # print(self.way)
         else:
             if self.pos_x == self.to_x and self.pos_y == self.to_y:
                 if self.pos_x == self.way[0][0] and self.pos_y == self.way[0][1]:
                     self.pos_x, self.pos_y = self.way[0]
                     self.way = self.way[1:]
-                # print(f'pos x {self.pos_x}, y {self.pos_y}')
                 if len(self.way) != 0:
                     self.to_x, self.to_y = self.way[0]
-                    # print(f'    to x {self.to_x} y {self.to_y}')
                     self.way = self.way[1:]
                     if self.game.level_map[self.to_y][self.to_x] in ['P', '.']:
                         if self.to_x == self.pos_x:
