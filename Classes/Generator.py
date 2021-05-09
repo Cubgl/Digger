@@ -154,13 +154,19 @@ class GeneratorMap():
                 self.tiles_around(size_x - 1, size_y - 1, size_x, size_y, map, 'T'):
             map[size_y - 1][size_x - 1] = ch
             return
-        x, y = self.take_random_tile(size_x, size_y, map, 'T')
+        best = None
+        max_status = None
         for attempt in range(77):
-            if map[y][x] == 'T' and \
-                    self.count_around(x, y, size_x, size_y) == \
-                    self.tiles_around(x, y, size_x, size_y, map, 'T'):
-                break
             x, y = self.take_random_tile(size_x, size_y, map, 'T')
+            count_total = self.count_around(x, y, size_x, size_y)
+            count_terrain = self.tiles_around(x, y, size_x, size_y, map, 'T')
+            status = count_terrain / count_total
+            if best is None or status > max_status:
+                best = [(x, y)]
+                max_status = status
+            elif status == max_status:
+                best.append((x, y))
+        x, y = choice(best)
         map[y][x] = ch
 
     def put_gold(self, size_x, size_y, map, count_gold):
@@ -184,7 +190,7 @@ class GeneratorMap():
     def put_one_sack(self, size_x, size_y, map):
         for attempt in range(7):
             x, y = self.take_random_tile(size_x, size_y - 1, map, 'T')
-            if y > 0 and (map[y - 1][x] == 'S' or map[y - 1][x] == 'G'):
+            if y > 0 and (map[y - 1][x] in ['S', 'G', 'F']):
                 continue
             if map[y + 1][x] == 'T':
                 map[y][x] = 'S'

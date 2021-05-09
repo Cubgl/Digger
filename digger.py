@@ -127,7 +127,8 @@ def main():
             game.is_over = True
         if pygame.sprite.spritecollideany(
                 game.player, game.finish_group, collided=pygame.sprite.collide_rect_ratio(.75)) \
-                is not None:
+                is not None and len(game.sack_group.sprites()) == 0 and \
+                len(game.gold_group.sprites()) == 0:
             game.goto_next_level(screen[game.level])
             if not game.is_over:
                 size = game.width_canvas, game.height_canvas
